@@ -80,27 +80,29 @@ export class Answer {
     async submitGuess() {
         const guess = this.inputs.map(input => input.value).join('').toLowerCase();
 
+        if (guess.length !== 5) {
+            this.game.showMessage('The word must contain 5 letters.');
+            return;
+        }
+
+        const WORD_OF_THE_DAY = 'about';
+
         try {
-            const response = await fetch('https://progweb-wwwordle-api.onrender.com/guess', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ guess })
+            const feedback = guess.split('').map((letter, index) => {
+                if (letter === WORD_OF_THE_DAY[index]) {
+                    return 'correct';
+                } else if (WORD_OF_THE_DAY.includes(letter)) {
+                    return 'present';
+                } else {
+                    return 'absent';
+                }
             });
 
-            const data = await response.json();
-
-            if (data.status === 'invalid') {
-                this.game.showMessage(data.message);
-                return;
-            }
-
-            data.feedback.forEach((status, index) => {
+            feedback.forEach((status, index) => {
                 this.inputs[index].className = 'letter ' + status;
             });
 
-            if (data.feedback.every(f => f === 'correct')) {
+            if (feedback.every(f => f === 'correct')) {
                 this.game.victory();
             } else {
                 this.game.nextAttempt();
